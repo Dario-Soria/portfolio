@@ -51,6 +51,7 @@ export const projects: Project[] = [
     images: photos('san-francisco', [
       ['dsc_0004', 'Golden Gate Bridge over the bay under a streaked blue sky'],
       ['dsc_9957', 'Dragon Gate at the entrance to Chinatown'],
+      ['dsc_9956', 'Dragon Gate and the green-tiled rooflines of Chinatown'],
       ['dsc_9962', 'Transamerica Pyramid seen from Grant Avenue beside a painted mural'],
       ['dsc_9972', 'Cable car approaching down a sunlit street'],
       ['dsc_9967', 'North Beach rooftops and the twin spires of Saints Peter and Paul Church'],
@@ -98,6 +99,7 @@ export const projects: Project[] = [
       ['dsc_8264', 'Portrait framed inside a vintage yellow television set'],
       ['dsc_8252', 'Reflection in a coloured glass window'],
       ['dsc_8231', 'Looking up towards tall windows in a weathered courtyard'],
+      ['dsc_8230', 'Profile looking up in a weathered courtyard'],
       ['dsc_8239', 'White, yellow and blue umbrellas hanging overhead'],
       ['dsc_8240', 'Hand-lettered sign: “La felicidad es ese pedacito de tiempo…”'],
       ['dsc_8235', 'Smiling reflection in an antique shop mirror'],
@@ -125,6 +127,7 @@ export const projects: Project[] = [
       ['dsc_7074', 'Parrot portrait against black'],
       ['gopr0032_1685471835334', 'Looking up into the rainforest canopy'],
       ['gopr0019_alta1266905402674517775', 'Wide-angle self-portrait above the falls'],
+      ['gopr0051_1685471835334', 'Wide-angle view of a timber pavilion among the trees'],
     ]),
   },
   {

@@ -46,17 +46,29 @@ const { about, contact } = site;
         <summary class="label">Information</summary>
         <div class="acc-body">{about.information.map((t) => <p>{t}</p>)}</div>
       </details>
-      <details>
-        <summary class="label">Disciplines</summary>
-        <ul class="acc-body">{about.disciplines.map((t) => <li>{t}</li>)}</ul>
-      </details>
-      <details>
-        <summary class="label">Tools</summary>
-        <ul class="acc-body">{about.tools.map((t) => <li>{t}</li>)}</ul>
-      </details>
+      {
+        about.sections.map((s) => (
+          <details>
+            <summary class="label">{s.title}</summary>
+            <ul class="acc-body">
+              {s.items.map((it) => (
+                <li class="row">
+                  {it.href ? (
+                    <a href={it.href} target="_blank" rel="noopener">{it.text} ↗</a>
+                  ) : (
+                    <span>{it.text}</span>
+                  )}
+                  {it.meta && <span class="meta">{it.meta}</span>}
+                </li>
+              ))}
+            </ul>
+          </details>
+        ))
+      }
       <details open>
         <summary class="label">Contact</summary>
         <ul class="acc-body">
+          <li class="meta">{contact.location}</li>
           <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>
           {contact.instagram && <li><a href={contact.instagram} target="_blank" rel="noopener">Instagram ↗</a></li>}
           {contact.linkedin && <li><a href={contact.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a></li>}
@@ -218,6 +230,18 @@ const { about, contact } = site;
   }
   .acc-body a:hover {
     text-decoration: underline;
+  }
+  .acc-body li + li {
+    margin-top: 2px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .meta {
+    color: var(--muted);
+    white-space: nowrap;
   }
 
   @media (max-width: 1000px) {
