@@ -1,0 +1,197 @@
+---
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Lightbox from '../../components/Lightbox.astro';
+import { projects, type Project } from '../../data/projects';
+import { url } from '../../lib/url';
+
+export function getStaticPaths() {
+  return projects.map((project) => ({ params: { slug: project.slug }, props: { project } }));
+}
+
+const { project } = Astro.props as { project: Project };
+const next = projects[(projects.indexOf(project) + 1) % projects.length];
+
+// Full-size versions for the lightbox
+const images = await Promise.all(
+  project.images.map(async (photo) => {
+    const full = await getImage({ src: photo.src, width: Math.min(photo.src.width, 2400), format: 'webp' });
+    const landscape = photo.src.width / photo.src.height > 1.15;
+    return { ...photo, full: full.src, landscape };
+  }),
+);
+
+// Layout: landscape images span both columns; portrait/square ones sit in pairs.
+// A lone portrait at the end also spans both columns so there's no hole.
+const portraitIdx = images.flatMap((img, i) => (img.landscape ? [] : [i]));
+const lonePortrait = portraitIdx.length % 2 === 1 ? portraitIdx.at(-1) : -1;
+const single = images.length === 1;
+---
+
+<Base title={project.title} description={project.description}>
+  <main class="page project grid4">
+    <aside class="side">
+      <div class="pill title"><h1>{project.title}</h1></div>
+      <div class="info fade-in">
+        <section>
+          <h2 class="label">Information</h2>
+          <dl>
+            <dt>Categories:</dt><dd>{project.categories.join(', ')}</dd>
+            <dt>Year:</dt><dd>{project.year}</dd>
+            {project.info.map(([k, v]) => <><dt>{k}:</dt><dd>{v}</dd></>)}
+          </dl>
+        </section>
+        <section>
+          <h2 class="label">Description</h2>
+          <p>{project.description}</p>
+        </section>
+      </div>
+    </aside>
+
+    <div class="back">
+      <a class="pill" href={url()}>
+        <span>Back to Overview</span><span class="arrow" aria-hidden="true">◂</span>
+      </a>
+    </div>
+
+    <div class={`gallery ${single ? 'single' : ''}`}>
+      {
+        images.map((photo, i) => {
+          const wide = single || photo.landscape || i === lonePortrait;
+          return (
+            <button
+              class={`shot fade-in ${wide ? 'wide' : ''}`}
+              data-index={i}
+              data-full={photo.full}
+              data-alt={photo.alt}
+              data-cursor="View"
+              aria-label={`Open image: ${photo.alt}`}
+            >
+              <Image
+                src={photo.src}
+                alt={photo.alt}
+                widths={wide ? [800, 1400, 2000] : [600, 1000, 1400]}
+                sizes={wide ? '(max-width: 1000px) 100vw, 50vw' : '(max-width: 1000px) 50vw, 25vw'}
+                loading={i < 2 ? 'eager' : 'lazy'}
+              />
+            </button>
+          );
+        })
+      }
+    </div>
+
+    <a class="pill next" href={url(`work/${next.slug}/`)}>
+      <span class="label">Next project</span>
+      <span>{next.title} ▸</span>
+    </a>
+  </main>
+  <Lightbox />
+</Base>
+
+<style>
+  .project {
+    align-items: start;
+  }
+  .side,
+  .back {
+    position: sticky;
+    top: calc(var(--header-h));
+  }
+  .side {
+    display: grid;
+    gap: var(--gap);
+  }
+  .title h1 {
+    font-weight: 400;
+  }
+  .info {
+    padding: 14px 16px 18px;
+    border-radius: var(--radius-panel);
+    background: var(--pill);
+    font-size: var(--fs);
+  }
+  .info section + section {
+    margin-top: 22px;
+  }
+  .info .label {
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 2px;
+  }
+  .info p {
+    font-size: var(--fs-text);
+    line-height: 1.5;
+  }
+  .arrow {
+    color: var(--muted);
+  }
+  .back .pill:hover .arrow {
+    color: var(--fg);
+  }
+
+  .gallery {
+    grid-column: 3 / span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gap);
+    align-items: start;
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--pill);
+    cursor: zoom-in;
+  }
+  .shot.wide {
+    grid-column: 1 / -1;
+  }
+  .shot :global(img) {
+    width: 100%;
+    height: auto;
+  }
+  /* Paired images share one tile shape so rows line up (full frame is in the lightbox) */
+  .shot:not(.wide) {
+    aspect-ratio: 4 / 5;
+  }
+  .shot:not(.wide) :global(img) {
+    height: 100%;
+    object-fit: cover;
+  }
+  /* Drawings: show the whole sheet, less rounding so the paper edge reads */
+  .gallery.single .shot {
+    border-radius: calc(var(--radius-card) / 2);
+  }
+
+  .next {
+    grid-column: 3 / span 2;
+    margin-top: var(--gap);
+  }
+  .next:hover span:last-child {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 1000px) {
+    .side,
+    .back {
+      position: static;
+    }
+    .side {
+      grid-column: 1 / -1;
+    }
+    .back {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+    .gallery,
+    .next {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

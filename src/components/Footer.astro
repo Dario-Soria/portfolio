@@ -1,0 +1,45 @@
+---
+import { site } from '../data/site';
+const { contact } = site;
+const year = new Date().getFullYear();
+---
+
+<footer class="footer grid4">
+  <div class="pill">
+    <a href={`mailto:${contact.email}`}>{contact.email}</a>
+  </div>
+  <div class="pill">
+    {contact.instagram && <a href={contact.instagram} target="_blank" rel="noopener">Instagram ↗</a>}
+    {contact.linkedin && <a href={contact.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>}
+    {!contact.instagram && !contact.linkedin && <span class="muted">{site.tagline}</span>}
+  </div>
+  <div class="pill span2">
+    <span class="muted">© {year} {site.name}. All rights reserved.</span>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding: var(--gap);
+    margin-top: clamp(60px, 12vh, 140px);
+  }
+  .span2 {
+    grid-column: span 2;
+  }
+  .muted {
+    color: var(--muted);
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 1000px) {
+    .span2 {
+      grid-column: 1 / -1;
+    }
+  }
+  @media (max-width: 560px) {
+    .footer {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

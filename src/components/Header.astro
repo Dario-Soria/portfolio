@@ -1,0 +1,246 @@
+---
+import { site } from '../data/site';
+import { projects, projectIndex } from '../data/projects';
+import { url } from '../lib/url';
+
+const { about, contact } = site;
+---
+
+<header class="header grid4">
+  <a class="pill brand" href={url()}>
+    <span class="brand-name">{site.name}</span>
+    <span class="brand-tag">{site.tagline}</span>
+  </a>
+
+  <div class="slot slot-work">
+    <button class="pill toggle" aria-expanded="false" aria-controls="work-panel" data-toggle="work">
+      <span>Work</span><span class="caret" aria-hidden="true"></span>
+    </button>
+    <nav id="work-panel" class="panel work-panel" aria-label="Work index" hidden>
+      <table>
+        <thead>
+          <tr class="label"><th>#</th><th>Title</th><th>Categories</th><th>Year</th></tr>
+        </thead>
+        <tbody>
+          {
+            projects.map((p) => (
+              <tr>
+                <td>{projectIndex(p)}</td>
+                <td><a href={url(`work/${p.slug}/`)}>{p.title}</a></td>
+                <td class="cats">{p.categories.join(', ')}</td>
+                <td>{p.year}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </nav>
+  </div>
+
+  <div class="slot slot-about">
+    <button class="pill toggle" aria-expanded="false" aria-controls="about-panel" data-toggle="about">
+      <span>About</span><span class="caret" aria-hidden="true"></span>
+    </button>
+    <div id="about-panel" class="panel about-panel" hidden>
+      <details open>
+        <summary class="label">Information</summary>
+        <div class="acc-body">{about.information.map((t) => <p>{t}</p>)}</div>
+      </details>
+      <details>
+        <summary class="label">Disciplines</summary>
+        <ul class="acc-body">{about.disciplines.map((t) => <li>{t}</li>)}</ul>
+      </details>
+      <details>
+        <summary class="label">Tools</summary>
+        <ul class="acc-body">{about.tools.map((t) => <li>{t}</li>)}</ul>
+      </details>
+      <details open>
+        <summary class="label">Contact</summary>
+        <ul class="acc-body">
+          <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>
+          {contact.instagram && <li><a href={contact.instagram} target="_blank" rel="noopener">Instagram ↗</a></li>}
+          {contact.linkedin && <li><a href={contact.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a></li>}
+          {contact.cv && <li><a href={url(contact.cv)} download>Download CV ↓</a></li>}
+        </ul>
+      </details>
+    </div>
+  </div>
+</header>
+
+<script>
+  const header = document.querySelector<HTMLElement>('.header')!;
+  const toggles = [...header.querySelectorAll<HTMLButtonElement>('[data-toggle]')];
+
+  const setOpen = (btn: HTMLButtonElement, open: boolean) => {
+    btn.setAttribute('aria-expanded', String(open));
+    document.getElementById(btn.getAttribute('aria-controls')!)!.hidden = !open;
+  };
+  const closeAll = (except?: HTMLButtonElement) =>
+    toggles.forEach((b) => b !== except && setOpen(b, false));
+
+  toggles.forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const open = btn.getAttribute('aria-expanded') !== 'true';
+      closeAll(btn);
+      setOpen(btn, open);
+    }),
+  );
+  document.addEventListener('click', (e) => {
+    if (!header.contains(e.target as Node)) closeAll();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAll();
+  });
+</script>
+
+<style>
+  .header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    padding: var(--gap);
+    align-items: start;
+  }
+
+  .brand {
+    grid-column: span 2;
+  }
+  .brand-name {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .slot {
+    position: relative;
+  }
+  .toggle {
+    width: 100%;
+  }
+  .caret {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--muted);
+    transition: transform 0.25s ease;
+  }
+  .toggle[aria-expanded='true'] .caret {
+    transform: rotate(180deg);
+    border-top-color: var(--fg);
+  }
+
+  .panel {
+    position: absolute;
+    top: calc(100% + var(--gap));
+    right: 0;
+    width: 100%;
+    max-height: calc(100vh - var(--header-h) - 20px);
+    overflow: auto;
+    padding: 14px;
+    border-radius: var(--radius-panel);
+    background: var(--panel-glass);
+    -webkit-backdrop-filter: blur(24px) saturate(1.2);
+    backdrop-filter: blur(24px) saturate(1.2);
+    animation: drop 0.22s ease both;
+  }
+  @keyframes drop {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+    }
+  }
+
+  /* Work index spans the two right-hand columns, like the reference */
+  .work-panel {
+    left: 0;
+    right: auto;
+    width: calc(200% + var(--gap));
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    text-align: left;
+    font-weight: 400;
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--line);
+  }
+  th:last-child,
+  td:last-child {
+    text-align: right;
+  }
+  td:first-child {
+    color: var(--muted);
+    width: 3em;
+  }
+  tbody tr {
+    transition: opacity 0.2s;
+  }
+  tbody:hover tr {
+    opacity: 0.4;
+  }
+  tbody tr:hover {
+    opacity: 1;
+  }
+  td a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+  tr {
+    position: relative;
+  }
+
+  details {
+    border-bottom: 1px solid var(--line);
+    padding: 6px 0;
+  }
+  details:last-child {
+    border-bottom: 0;
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 2px 0;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  .acc-body {
+    padding: 6px 0 4px;
+    font-size: var(--fs-text);
+  }
+  .acc-body p + p {
+    margin-top: 0.7em;
+  }
+  .acc-body a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 1000px) {
+    .brand-tag {
+      display: none;
+    }
+  }
+  @media (max-width: 560px) {
+    .header {
+      grid-template-columns: 1fr 1fr;
+    }
+    .brand {
+      grid-column: 1 / -1;
+    }
+    .work-panel,
+    .about-panel {
+      width: calc(200% + var(--gap));
+    }
+    .about-panel {
+      right: 0;
+    }
+    .cats {
+      display: none;
+    }
+  }
+</style>

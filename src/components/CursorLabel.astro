@@ -1,0 +1,54 @@
+---
+// A small pill that follows the mouse and shows the `data-cursor` text of the hovered element.
+---
+
+<div class="cursor-label" aria-hidden="true"></div>
+
+<script>
+  const label = document.querySelector<HTMLElement>('.cursor-label')!;
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (canHover) {
+    let x = 0,
+      y = 0,
+      raf = 0;
+    const move = () => {
+      label.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+      raf = 0;
+    };
+    document.addEventListener('pointermove', (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      const target = (e.target as Element).closest<HTMLElement>('[data-cursor]');
+      if (target) {
+        label.textContent = target.dataset.cursor!;
+        label.classList.add('on');
+      } else {
+        label.classList.remove('on');
+      }
+      if (!raf) raf = requestAnimationFrame(move);
+    });
+    document.addEventListener('pointerleave', () => label.classList.remove('on'));
+  }
+</script>
+
+<style>
+  .cursor-label {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    pointer-events: none;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(243, 243, 243, 0.85);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .cursor-label.on {
+    opacity: 1;
+  }
+</style>

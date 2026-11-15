@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/url';
+---
+
+<Base title="Not found">
+  <main class="page grid4">
+    <p class="pill">Page not found</p>
+    <a class="pill" href={url()}><span>Back to Overview</span><span>◂</span></a>
+  </main>
+</Base>
