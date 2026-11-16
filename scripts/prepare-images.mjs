@@ -19,12 +19,12 @@ const SERIES = {
 };
 
 // Drawings were photographed on a desk: crop to the paper, rotate, tone.
-// extract = { left, top, width, height } in the original's pixels.
+// extract = { left, top, width, height } in the original's pixels (full-res files from Creativity.zip).
 const DRAWINGS = {
-  'flor-del-ciruelo': { extract: { left: 236, top: 34, width: 1500, height: 1450 } },
-  'birdcage': { extract: { left: 300, top: 6, width: 1320, height: 878 } },
-  'lilies': { extract: { left: 0, top: 0, width: 1500, height: 2000 }, tone: true },
-  'hand-studies': { extract: { left: 70, top: 4, width: 1320, height: 1880 }, rotate: -90 },
+  'flor-del-ciruelo': { extract: { left: 944, top: 136, width: 6000, height: 5800 } },
+  'birdcage': { extract: { left: 600, top: 12, width: 2640, height: 1756 } },
+  'lilies': { extract: { left: 0, top: 0, width: 6000, height: 8000 }, tone: true },
+  'hand-studies': { extract: { left: 143, top: 8, width: 2703, height: 3850 }, rotate: -90 },
 };
 
 async function writeJpeg(pipeline, file) {

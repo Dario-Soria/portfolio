@@ -4,6 +4,14 @@ import Base from '../layouts/Base.astro';
 import CursorLabel from '../components/CursorLabel.astro';
 import { projects } from '../data/projects';
 import { url } from '../lib/url';
+
+// Every photo on the home grid: each project's cover first, then the rest of its images.
+const tiles = projects.flatMap((p) => [
+  { project: p, src: p.cover, alt: p.title, position: p.coverPosition, first: true },
+  ...p.images
+    .filter((photo) => photo.src.src !== p.cover.src)
+    .map((photo) => ({ project: p, src: photo.src, alt: photo.alt, position: undefined, first: false })),
+]);
 ---
 
 <Base>
@@ -11,21 +19,23 @@ import { url } from '../lib/url';
     <h1 class="sr-only">Selected work</h1>
     <ul class="grid4 cards">
       {
-        projects.map((p, i) => (
-          <li class="fade-in" style={`animation-delay:${i * 60}ms`}>
-            <a class="card" href={url(`work/${p.slug}/`)} data-cursor={p.title}>
+        tiles.map((t, i) => (
+          <li class="fade-in" style={`animation-delay:${Math.min(i, 12) * 50}ms`}>
+            <a class="card" href={url(`work/${t.project.slug}/`)} data-cursor={t.project.title}>
               <Image
-                src={p.cover}
-                alt={p.title}
+                src={t.src}
+                alt={t.alt}
                 widths={[480, 800, 1200]}
                 sizes="(max-width: 560px) 50vw, (max-width: 1000px) 50vw, 25vw"
                 loading={i < 4 ? 'eager' : 'lazy'}
-                style={p.coverPosition ? `object-position:${p.coverPosition}` : undefined}
+                style={t.position ? `object-position:${t.position}` : undefined}
               />
-              <span class="card-title">
-                <span>{p.title}</span>
-                <span class="muted">{p.year}</span>
-              </span>
+              {t.first && (
+                <span class="card-title">
+                  <span>{t.project.title}</span>
+                  <span class="muted">{t.project.year}</span>
+                </span>
+              )}
             </a>
           </li>
         ))

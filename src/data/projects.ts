@@ -148,7 +148,7 @@ export const projects: Project[] = [
   {
     slug: 'flor-del-ciruelo',
     title: 'Flor del Ciruelo',
-    year: '—', // TODO: add year
+    year: '2023',
     categories: ['Watercolour', 'Ink'],
     info: [['Medium', 'Ink and watercolour on paper']],
     description:
@@ -162,7 +162,7 @@ export const projects: Project[] = [
   {
     slug: 'lilies',
     title: 'Lilies',
-    year: '—', // TODO: add year
+    year: '2023',
     categories: ['Ink'],
     info: [['Medium', 'Ink on paper']],
     description:
