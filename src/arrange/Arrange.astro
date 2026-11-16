@@ -1,0 +1,305 @@
+---
+// Local-only photo arranger. Injected at /arrange by integrations/arrange.mjs
+// during `npm run dev` only — it is never built into the public site.
+import { Image } from 'astro:assets';
+import { arrangedProjects } from '../data/projects';
+import '../styles/global.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Arrange photos</title>
+  </head>
+  <body>
+    <header class="bar">
+      <strong>Arrange photos</strong>
+      <span class="hint">
+        Drag to reorder · Click a photo to hide / show · ▲ ▼ move a project · The first visible photo is the cover
+      </span>
+      <span id="status" class="status" role="status"></span>
+      <a class="btn ghost" href="/" target="_blank">Preview site ↗</a>
+      <button id="save" class="btn ghost" disabled>Save</button>
+      <button id="publish" class="btn">Save &amp; publish</button>
+    </header>
+
+    <main id="projects">
+      {
+        arrangedProjects.map((p) => (
+          <section class:list={['project', { off: p.hidden }]} data-slug={p.slug}>
+            <div class="phead">
+              <button class="move" data-dir="-1" aria-label={`Move ${p.title} up`}>▲</button>
+              <button class="move" data-dir="1" aria-label={`Move ${p.title} down`}>▼</button>
+              <h2>{p.title}</h2>
+              <span class="count" />
+              <label class="phide">
+                <input type="checkbox" checked={p.hidden} /> Hide whole project
+              </label>
+            </div>
+            <ul class="photos">
+              {p.images.map((ph) => (
+                <li draggable="true" data-id={ph.id} class:list={{ off: ph.hidden }} title={ph.alt}>
+                  <Image src={ph.src} alt={ph.alt} width={260} />
+                  <span class="tag cover-tag">Cover</span>
+                  <span class="tag hidden-tag">Hidden</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </main>
+
+    <script>
+      const main = document.getElementById('projects')!;
+      const status = document.getElementById('status')!;
+      const saveBtn = document.getElementById('save') as HTMLButtonElement;
+      const publishBtn = document.getElementById('publish') as HTMLButtonElement;
+      const sections = () => [...main.querySelectorAll<HTMLElement>('.project')];
+
+      let dirty = false;
+      const say = (msg: string, kind: '' | 'ok' | 'err' | 'busy' = '') => {
+        status.textContent = msg;
+        status.dataset.kind = kind;
+      };
+      const changed = () => {
+        dirty = true;
+        saveBtn.disabled = false;
+        say('Unsaved changes');
+        refresh();
+      };
+
+      // Cover badge + "n of m shown" per project
+      function refresh() {
+        for (const s of sections()) {
+          const items = [...s.querySelectorAll('li')];
+          const shown = items.filter((li) => !li.classList.contains('off'));
+          items.forEach((li) => li.classList.toggle('cover', li === shown[0]));
+          s.querySelector('.count')!.textContent = `${shown.length} of ${items.length} shown`;
+        }
+      }
+      refresh();
+
+      // ── Drag to reorder (within a project) ──
+      let dragging: HTMLElement | null = null;
+      main.addEventListener('dragstart', (e) => {
+        dragging = (e.target as HTMLElement).closest('li');
+        dragging?.classList.add('dragging');
+        e.dataTransfer?.setData('text/plain', '');
+      });
+      main.addEventListener('dragend', () => {
+        dragging?.classList.remove('dragging');
+        dragging = null;
+      });
+      main.addEventListener('dragover', (e) => {
+        if (!dragging) return;
+        const target = (e.target as HTMLElement).closest('li');
+        const list = dragging.parentElement!;
+        if (!target || target === dragging || target.parentElement !== list) return;
+        e.preventDefault();
+        const r = target.getBoundingClientRect();
+        const after = e.clientX > r.left + r.width / 2;
+        const ref = after ? target.nextElementSibling : target;
+        if (ref !== dragging && dragging.nextElementSibling !== ref) {
+          list.insertBefore(dragging, ref);
+          changed();
+        }
+      });
+      main.addEventListener('drop', (e) => e.preventDefault());
+
+      // ── Click a photo to hide / show ──
+      main.addEventListener('click', (e) => {
+        const el = e.target as HTMLElement;
+        const li = el.closest('li');
+        if (li) {
+          li.classList.toggle('off');
+          return changed();
+        }
+        const move = el.closest<HTMLButtonElement>('.move');
+        if (move) {
+          const s = move.closest<HTMLElement>('.project')!;
+          if (move.dataset.dir === '-1' && s.previousElementSibling) main.insertBefore(s, s.previousElementSibling);
+          if (move.dataset.dir === '1' && s.nextElementSibling) main.insertBefore(s.nextElementSibling, s);
+          s.scrollIntoView({ block: 'nearest' });
+          return changed();
+        }
+      });
+      main.addEventListener('change', (e) => {
+        const box = e.target as HTMLInputElement;
+        box.closest('.project')!.classList.toggle('off', box.checked);
+        changed();
+      });
+
+      // ── Save / publish ──
+      const collect = () => ({
+        projects: sections().map((s) => s.dataset.slug!),
+        hiddenProjects: sections().filter((s) => s.classList.contains('off')).map((s) => s.dataset.slug!),
+        photos: Object.fromEntries(
+          sections().map((s) => [s.dataset.slug!, [...s.querySelectorAll('li')].map((li) => li.dataset.id!)]),
+        ),
+        hidden: [...main.querySelectorAll<HTMLElement>('li.off')].map((li) => li.dataset.id!),
+      });
+
+      async function send(action: 'save' | 'publish') {
+        saveBtn.disabled = publishBtn.disabled = true;
+        say(action === 'publish' ? 'Publishing…' : 'Saving…', 'busy');
+        dirty = false; // saving reloads this page; don't warn
+        try {
+          const res = await fetch(`/__arrange/${action}`, { method: 'POST', body: JSON.stringify(collect()) });
+          const out = await res.json();
+          say(out.message, out.ok ? 'ok' : 'err');
+        } catch {
+          // The dev server reloads the page as soon as the file is written; the result shows after reload.
+        }
+        publishBtn.disabled = false;
+      }
+      saveBtn.addEventListener('click', () => send('save'));
+      publishBtn.addEventListener('click', () => {
+        if (confirm('Publish this arrangement to the live site?\n\nThis commits src/data/arrangement.json and pushes it to GitHub. The site updates in about a minute.'))
+          send('publish');
+      });
+
+      // Show the result of the last save/publish after the automatic reload
+      fetch('/__arrange/status')
+        .then((r) => r.json())
+        .then((last) => last && Date.now() - last.time < 120_000 && say(last.message, last.ok ? 'ok' : 'err'));
+
+      addEventListener('beforeunload', (e) => {
+        if (dirty) e.preventDefault();
+      });
+    </script>
+
+    <style>
+      body {
+        background: #fff;
+        padding: 0 16px 60px;
+      }
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 14px;
+        padding: 12px 0;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+      .hint {
+        color: var(--muted);
+        flex: 1;
+      }
+      .status[data-kind='ok'] {
+        color: #1a7f37;
+      }
+      .status[data-kind='err'] {
+        color: #c62828;
+        white-space: pre-wrap;
+      }
+      .status[data-kind='busy'] {
+        color: var(--muted);
+      }
+      .btn {
+        padding: 6px 14px;
+        border-radius: 999px;
+        background: var(--fg);
+        color: #fff;
+        cursor: pointer;
+      }
+      .btn.ghost {
+        background: var(--pill);
+        color: var(--fg);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .project {
+        padding: 18px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .project.off .photos {
+        opacity: 0.3;
+      }
+      .phead {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .phead h2 {
+        font-weight: 700;
+        margin-left: 4px;
+      }
+      .count {
+        color: var(--muted);
+        flex: 1;
+      }
+      .move {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--pill);
+        cursor: pointer;
+      }
+      .phide {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+      .photos {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+      li {
+        position: relative;
+        aspect-ratio: 4 / 5;
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--pill);
+        cursor: grab;
+        outline: 2px solid transparent;
+        transition: opacity 0.15s, outline-color 0.15s;
+      }
+      li:hover {
+        outline-color: var(--fg);
+      }
+      li :global(img) {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+      }
+      li.dragging {
+        opacity: 0.35;
+      }
+      li.off :global(img) {
+        opacity: 0.25;
+        filter: grayscale(1);
+      }
+      .tag {
+        position: absolute;
+        left: 6px;
+        top: 6px;
+        display: none;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #fff;
+      }
+      li.cover .cover-tag {
+        display: block;
+      }
+      li.off .hidden-tag {
+        display: block;
+        background: var(--fg);
+        color: #fff;
+      }
+    </style>
+  </body>
+</html>

@@ -5,13 +5,16 @@ import CursorLabel from '../components/CursorLabel.astro';
 import { projects } from '../data/projects';
 import { url } from '../lib/url';
 
-// Every photo on the home grid: each project's cover first, then the rest of its images.
-const tiles = projects.flatMap((p) => [
-  { project: p, src: p.cover, alt: p.title, position: p.coverPosition, first: true },
-  ...p.images
-    .filter((photo) => photo.src.src !== p.cover.src)
-    .map((photo) => ({ project: p, src: photo.src, alt: photo.alt, position: undefined, first: false })),
-]);
+// Every visible photo on the home grid, in arranged order. The first one of each project is its cover.
+const tiles = projects.flatMap((p) =>
+  p.images.map((photo, i) => ({
+    project: p,
+    src: photo.src,
+    alt: photo.alt,
+    position: i === 0 ? p.coverPosition : undefined,
+    first: i === 0,
+  })),
+);
 ---
 
 <Base>

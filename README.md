@@ -9,12 +9,29 @@ npm install
 npm run dev        # http://localhost:4321
 ```
 
+## Remove or reorder photos
+
+```bash
+npm run dev
+```
+
+Then open **http://localhost:4321/arrange**:
+
+- **Drag** a photo to move it within its project. The order is the same on the home page and the project page.
+- **Click** a photo to hide it, and click again to bring it back. Hidden photos stay in the repo; they just aren't shown.
+- **▲ ▼** move a whole project; **Hide whole project** takes it off the site.
+- The **first visible photo** of each project is its cover.
+- **Save** writes `src/data/arrangement.json` (check it with *Preview site*). **Save & publish** also commits that one file and pushes it, and the live site updates in about a minute.
+
+The editor exists only while `npm run dev` is running. It is not part of the built site.
+
 ## Edit content
 
 | What | Where |
 |---|---|
-| Name, tagline, bio, contact links, CV | `src/data/site.ts` (look for `TODO`) |
-| Projects: order, titles, text, which photos | `src/data/projects.ts` |
+| Name, tagline, bio, contact links, CV | `src/data/site.ts` |
+| Photo order, hidden photos/projects | `localhost:4321/arrange` → `src/data/arrangement.json` |
+| Projects: titles, text, captions | `src/data/projects.ts` |
 | Colours, spacing, corner radius, font | `src/styles/global.css` (`:root`) |
 | CV download | put `cv.pdf` in `public/`, then set `cv: 'cv.pdf'` in `site.ts` |
 

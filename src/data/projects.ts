@@ -1,4 +1,5 @@
 import type { ImageMetadata } from 'astro';
+import arrangement from './arrangement.json';
 
 // All prepared images (output of `npm run images`).
 const files = import.meta.glob<{ default: ImageMetadata }>('../assets/work/**/*.jpg', {
@@ -12,11 +13,15 @@ function img(path: string): ImageMetadata {
 }
 
 export interface Photo {
+  /** "<folder>/<file>", e.g. "san-francisco/dsc_0004" — used by arrangement.json */
+  id: string;
   src: ImageMetadata;
   alt: string;
+  hidden?: boolean;
 }
 
 export interface Project {
+  hidden?: boolean;
   slug: string;
   title: string;
   year: string;
@@ -24,6 +29,7 @@ export interface Project {
   /** Rows in the "Information" box: [label, value] */
   info: [string, string][];
   description: string;
+  /** Default cover. Once a project is arranged, its first visible photo is the cover. */
   cover: ImageMetadata;
   /** CSS object-position for the cover crop on the home grid */
   coverPosition?: string;
@@ -31,11 +37,15 @@ export interface Project {
 }
 
 const photos = (folder: string, list: [string, string][]): Photo[] =>
-  list.map(([file, alt]) => ({ src: img(`${folder}/${file}.jpg`), alt }));
+  list.map(([file, alt]) => ({ id: `${folder}/${file}`, src: img(`${folder}/${file}.jpg`), alt }));
 
-// Order here = order on the home grid and in the Work index.
-// To drop a photo, delete its line. To reorder, move the line.
-export const projects: Project[] = [
+// ─────────────────────────────────────────────────────────────
+// ORDER AND HIDING live in arrangement.json, edited with the
+// local editor: `npm run dev`, then open http://localhost:4321/arrange
+// The list below holds titles, text and captions. Photos not yet
+// in arrangement.json keep the order given here.
+// ─────────────────────────────────────────────────────────────
+const allProjects: Project[] = [
   {
     slug: 'san-francisco',
     title: 'San Francisco',
@@ -172,4 +182,43 @@ export const projects: Project[] = [
   },
 ];
 
-export const projectIndex = (p: Project) => String(projects.indexOf(p) + 1).padStart(2, '0');
+// ── Apply arrangement.json (order + hidden) ─────────────────
+interface Arrangement {
+  projects: string[];
+  hiddenProjects: string[];
+  photos: Record<string, string[]>;
+  hidden: string[];
+}
+const arr = arrangement as Arrangement;
+
+/** Sort by a saved order; anything not in it keeps its original place after the saved ones. */
+function byOrder<T>(items: T[], key: (t: T) => string, order: string[] | undefined): T[] {
+  if (!order?.length) return items;
+  const pos = new Map(order.map((k, i) => [k, i]));
+  const rank = (t: T, i: number) => pos.get(key(t)) ?? order.length + i;
+  return items
+    .map((t, i) => [t, rank(t, i)] as const)
+    .sort((a, b) => a[1] - b[1])
+    .map(([t]) => t);
+}
+
+/** Every project and photo, in display order, with hidden flags — used by the editor. */
+export const arrangedProjects: Project[] = byOrder(allProjects, (p) => p.slug, arr.projects).map((p) => {
+  // Not arranged yet: default cover goes first
+  const defaultOrder = [p.images.find((ph) => ph.src.src === p.cover.src)?.id ?? ''];
+  const images = byOrder(p.images, (ph) => ph.id, arr.photos[p.slug] ?? defaultOrder).map((ph) => ({
+    ...ph,
+    hidden: arr.hidden.includes(ph.id),
+  }));
+  return { ...p, hidden: arr.hiddenProjects.includes(p.slug), images };
+});
+
+/** What the site shows: hidden photos/projects removed; first visible photo is the cover. */
+export const projects: Project[] = arrangedProjects.flatMap((p) => {
+  const images = p.images.filter((ph) => !ph.hidden);
+  if (p.hidden || images.length === 0) return [];
+  const cover = images[0].src;
+  return [{ ...p, images, cover, coverPosition: cover.src === p.cover.src ? p.coverPosition : undefined }];
+});
+
+export const projectIndex =(p: Project) => String(projects.indexOf(p) + 1).padStart(2, '0');
