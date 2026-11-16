@@ -1,6 +1,78 @@
 {
-  "projects": [],
+  "projects": [
+    "san-francisco",
+    "hand-studies",
+    "san-telmo",
+    "iguazu",
+    "birdcage",
+    "flor-del-ciruelo",
+    "lilies"
+  ],
   "hiddenProjects": [],
-  "photos": {},
-  "hidden": []
+  "photos": {
+    "san-francisco": [
+      "san-francisco/dsc_9957",
+      "san-francisco/dsc_9972",
+      "san-francisco/dsc_0004",
+      "san-francisco/dsc_9956",
+      "san-francisco/dsc_9962",
+      "san-francisco/dsc_9967",
+      "san-francisco/dsc_9978",
+      "san-francisco/dsc_9981",
+      "san-francisco/dsc_9992",
+      "san-francisco/dsc_9973",
+      "san-francisco/dsc_0007",
+      "san-francisco/dsc_9989",
+      "san-francisco/dsc_9987",
+      "san-francisco/dsc_9959"
+    ],
+    "hand-studies": [
+      "drawings/hand-studies"
+    ],
+    "san-telmo": [
+      "san-telmo/dsc_8238",
+      "san-telmo/dsc_8242",
+      "san-telmo/dsc_8239",
+      "san-telmo/dsc_8251",
+      "san-telmo/dsc_8264",
+      "san-telmo/dsc_8252",
+      "san-telmo/dsc_8231",
+      "san-telmo/dsc_8230",
+      "san-telmo/dsc_8240",
+      "san-telmo/dsc_8235",
+      "san-telmo/dsc_8249",
+      "san-telmo/dsc_8260"
+    ],
+    "iguazu": [
+      "iguazu/dsc_7074",
+      "iguazu/dsc_7065",
+      "iguazu/dsc_7107",
+      "iguazu/dsc_7069",
+      "iguazu/dsc_7091",
+      "iguazu/gopr0032_1685471835334",
+      "iguazu/gopr0019_alta1266905402674517775",
+      "iguazu/gopr0051_1685471835334"
+    ],
+    "birdcage": [
+      "drawings/birdcage"
+    ],
+    "flor-del-ciruelo": [
+      "drawings/flor-del-ciruelo"
+    ],
+    "lilies": [
+      "drawings/lilies"
+    ]
+  },
+  "hidden": [
+    "san-francisco/dsc_9957",
+    "san-francisco/dsc_9956",
+    "san-francisco/dsc_9981",
+    "san-francisco/dsc_9973",
+    "san-francisco/dsc_9989",
+    "san-telmo/dsc_8251",
+    "san-telmo/dsc_8252",
+    "san-telmo/dsc_8231",
+    "san-telmo/dsc_8230",
+    "iguazu/gopr0051_1685471835334"
+  ]
 }
